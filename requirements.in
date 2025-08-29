@@ -1,2 +1,6 @@
 pycryptodome
 build
+ruff
+mypy
+pylint
+junit2html

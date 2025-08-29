@@ -60,7 +60,7 @@ testdirty:
 
 .PHONY: lint
 lint:
-	@echo "Not implemented"
+	-venv/bin/ruff check pagecryptor/pagecryptor.py
 
 .PHONY: reports
 reports:
