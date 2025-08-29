@@ -5,6 +5,7 @@ import json
 import sys
 import getpass
 from pathlib import Path
+import importlib.metadata
 import importlib.resources
 
 from Crypto.Cipher import AES
@@ -77,14 +78,25 @@ def encrypt_html(plaintext_html: bytes, password: bytes, iterations: int = 200_0
         "tag_b64": base64.b64encode(tag).decode(),
     }
 
+epilog = """The input HTML file should be a complete HTML file with <head> and
+<body>. For security, do not use --password to specify the password. Instead,
+let the program ask you for the encryption password. The resulting output file
+is a standalone HTML page you can open in a browser. It will ask for the
+password, and if correct, will decrypt and display your original page. All
+decryption occurs in the browser, nothing is sent off your machine.
+"""
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate encrypted HTML page.")
-    parser.add_argument("input_html")
-    parser.add_argument("output_html")
-    parser.add_argument("--dump-json", help="Write encryption parameters to a JSON file.")
-    parser.add_argument("--password", help="Password for encryption (insecure, use only for testing)")
-
+    parser = argparse.ArgumentParser(description="Generate encrypted HTML page",
+                                     add_help=False, epilog=epilog)
+    parser.add_argument("input_html", help="HTML page to encrypt")
+    parser.add_argument("output_html", help="Encrypted HTML file with client side decrypt")
+    parser.add_argument("-h", "--help", action="help", help="Show this help message and exit")
+    parser.add_argument("--dump-json", metavar="JSONFILE",
+                        help="Write encryption parms to JSON file (for test)")
+    parser.add_argument("--password", help="Encryption password (insecure, test only)")
+    version = importlib.metadata.version("pagecryptor")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {version}")
     args = parser.parse_args()
 
     if args.password:
@@ -98,16 +110,22 @@ def main():
             sys.exit(1)
         password = pw1.encode()
 
-    plaintext_html = Path(args.input_html).read_text(encoding="utf-8")
+    try:
+        plaintext_html = Path(args.input_html).read_text(encoding="utf-8")
+    except FileNotFoundError:
+        print("Could not find input file:", args.input_html)
+        sys.exit(1)
 
-    # Strip enclosing <html> ... </html>
-    # This keeps everything inside for replacement at runtime
-    stripped = plaintext_html.strip()
-    if stripped.lower().startswith("<html"):
-        start = stripped.find(">") + 1
-        end = stripped.rfind("</html>")
-        if end != -1:
-            stripped = stripped[start:end]
+    # Strip enclosing <html> ... </html> completely
+    lines = plaintext_html.splitlines()
+    # keep only lines that do not contain <html> or </html> (case-insensitive)
+    stripped_lines = [
+        line for line in lines if "<html" not in line.lower() and
+                                  "</html>" not in line.lower() and
+                                  "<!doctype" not in line.lower()
+    ]
+    # make sure last line has a newline
+    stripped = "\n".join(stripped_lines) + "\n"
     plaintext_html_bytes = stripped.encode("utf-8")
 
     params = encrypt_html(plaintext_html_bytes, password)
