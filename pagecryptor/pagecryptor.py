@@ -83,7 +83,6 @@ def main():
     parser.add_argument("input_html")
     parser.add_argument("output_html")
     parser.add_argument("--dump-json", help="Write encryption parameters to a JSON file.")
-    parser.add_argument("--decrypt-js", default="decrypt.js", help="Path to decrypt.js file.")
     parser.add_argument("--password", help="Password for encryption (insecure, use only for testing)")
 
     args = parser.parse_args()
