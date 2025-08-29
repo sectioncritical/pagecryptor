@@ -1,0 +1,11 @@
+* text=auto
+
+Makefile text
+*.html text diff=html
+*.js text
+*.py text diff=python
+*.md text diff=markdown
+*.json text
+*.txt text
+*.toml text
+*.yml text
