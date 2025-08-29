@@ -3,7 +3,7 @@ import argparse
 import base64
 import json
 import sys
-from getpass import getpass
+import getpass
 from pathlib import Path
 
 from Crypto.Cipher import AES
@@ -83,14 +83,20 @@ def main():
     parser.add_argument("output_html")
     parser.add_argument("--dump-json", help="Write encryption parameters to a JSON file.")
     parser.add_argument("--decrypt-js", default="decrypt.js", help="Path to decrypt.js file.")
+    parser.add_argument("--password", help="Password for encryption (insecure, use only for testing)")
+
     args = parser.parse_args()
 
-    pw1 = getpass("Enter encryption password: ")
-    pw2 = getpass("Re-enter encryption password: ")
-    if pw1 != pw2 or not pw1:
-        print("Error: passwords do not match or are empty", file=sys.stderr)
-        sys.exit(1)
-    password = pw1.encode()
+    if args.password:
+        pw1 = args.password
+        password = pw1.encode()
+    else:
+        pw1 = getpass.getpass("Enter encryption password: ")
+        pw2 = getpass.getpass("Re-enter encryption password: ")
+        if pw1 != pw2 or not pw1:
+            print("Error: passwords do not match or are empty", file=sys.stderr)
+            sys.exit(1)
+        password = pw1.encode()
 
     plaintext_html = Path(args.input_html).read_text(encoding="utf-8")
 
