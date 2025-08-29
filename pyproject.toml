@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pagecryptor"
+version = "0.1.0"
+description = "Encrypt an HTML page for client-side self decryption."
+authors = [
+    { name="Joseph Kroesche", email="joe@kroesche.org" }
+]
+readme = "README.md"
+requires-python = ">=3.8"
+license = { file = "LICENSE.md" }
+dependencies = [
+    "pycryptodome"
+]
+
+[project.scripts]
+pagecryptor = "pagecryptor.pagecryptor:main"
+
+[tool.setuptools]
+packages = ["pagecryptor"]
+package-data = { "pagecryptor" = ["decrypt.js"] }
+
