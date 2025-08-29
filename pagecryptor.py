@@ -17,12 +17,12 @@ HTML_TEMPLATE = Template(r"""<!DOCTYPE html>
 <html lang="en">
 <meta charset="utf-8">
 <title>Encrypted Page</title>
-<body>
+<body style="font-family: sans-serif; background: #eee; text-align: center; padding-top: 3em;">
   <div id="gate">
-    <h1>Enter password</h1>
-    <input id="pw" type="password">
+    <h1 style="font-size: 1.2em; font-weight: normal;">Enter password</h1>
+    <input id="pw" type="password" style="background: white; padding: 0.5em;">
     <button id="go">Decrypt</button>
-    <div id="msg" style="color:red;"></div>
+    <div id="msg" style="color:red; margin-top:0.5em;"></div>
   </div>
 <script>
 $decrypt_js
@@ -47,7 +47,7 @@ $decrypt_js
         params.salt_b64,
         params.iterations
       );
-      document.body.innerHTML = html;
+      document.documentElement.innerHTML = html;
     } catch (e) {
       document.getElementById("msg").textContent = "Decryption failed.";
     }
@@ -92,8 +92,19 @@ def main():
         sys.exit(1)
     password = pw1.encode()
 
-    plaintext_html = Path(args.input_html).read_bytes()
-    params = encrypt_html(plaintext_html, password)
+    plaintext_html = Path(args.input_html).read_text(encoding="utf-8")
+
+    # Strip enclosing <html> ... </html>
+    # This keeps everything inside for replacement at runtime
+    stripped = plaintext_html.strip()
+    if stripped.lower().startswith("<html"):
+        start = stripped.find(">") + 1
+        end = stripped.rfind("</html>")
+        if end != -1:
+            stripped = stripped[start:end]
+    plaintext_html_bytes = stripped.encode("utf-8")
+
+    params = encrypt_html(plaintext_html_bytes, password)
 
     # Load decrypt.js and strip `export`
     decrypt_js = Path(args.decrypt_js).read_text(encoding="utf-8")
