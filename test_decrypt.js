@@ -3,7 +3,12 @@ import fs from "fs";
 import { decryptHtml } from "./decrypt.js";
 
 async function main() {
-  const params = JSON.parse(fs.readFileSync("test_vectors.json", "utf-8"));
+  const file = process.argv[2];
+  if (!file) {
+    console.error("Usage: node test_decrypt.js <test-vector.json>");
+    process.exit(1);
+  }
+  const params = JSON.parse(fs.readFileSync(file, "utf-8"));
 
   try {
     const plaintext = await decryptHtml(
