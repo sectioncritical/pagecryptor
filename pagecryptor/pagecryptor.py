@@ -5,6 +5,7 @@ import json
 import sys
 import getpass
 from pathlib import Path
+import importlib.resources
 
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA256
@@ -113,7 +114,7 @@ def main():
     params = encrypt_html(plaintext_html_bytes, password)
 
     # Load decrypt.js and strip `export`
-    decrypt_js = Path(args.decrypt_js).read_text(encoding="utf-8")
+    decrypt_js = importlib.resources.read_text("pagecryptor", "decrypt.js")
     decrypt_js = decrypt_js.replace("export ", "")
 
     html_out = HTML_TEMPLATE.substitute(decrypt_js=decrypt_js, **params)
