@@ -1,4 +1,8 @@
 // decrypt.js
+// This function only:
+// Copyright 2025 Joseph Kroesche
+// Subject to MIT license: https://choosealicense.com/licenses/mit/
+//
 export async function decryptHtml(password, ciphertextB64, tagB64, ivB64, saltB64, iterations) {
   const enc = new TextEncoder();
   const dec = new TextDecoder();
