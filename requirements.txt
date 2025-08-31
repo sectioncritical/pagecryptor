@@ -19,3 +19,4 @@ setuptools==80.9.0
 tomlkit==0.13.3
 typing_extensions==4.15.0
 wheel==0.45.1
+-e .

@@ -4,3 +4,4 @@ ruff
 mypy
 pylint
 junit2html
+-e .

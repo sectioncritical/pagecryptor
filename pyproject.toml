@@ -4,20 +4,21 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pagecryptor"
-version = "0.1.0"
+version = "0.2.0"
 description = "Encrypt an HTML page for client-side self decryption."
 authors = [
-    { name="Joseph Kroesche", email="joe@kroesche.org" }
+    { name="Joseph Kroesche" }
 ]
 readme = "README.md"
-requires-python = ">=3.9"
-license = { file = "LICENSE.md" }
+requires-python = ">=3.10"
+license = "MIT"
+license-files = [ "LICENSE.md" ]
 dependencies = [
     "pycryptodome"
 ]
 
 [project.scripts]
-pagecryptor = "pagecryptor.pagecryptor:main"
+pagecryptor = "pagecryptor.pagecryptor:cli"
 
 [tool.setuptools]
 packages = ["pagecryptor"]
@@ -35,3 +36,13 @@ select = [
     "RUF",      # ruff rules
     "D",        # pydocstyle
 ]
+ignore = [
+    "D203",     # blank line nonsense
+    "D213",     # summary second line
+]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+warn_unused_configs = true
+warn_unused_ignores = true

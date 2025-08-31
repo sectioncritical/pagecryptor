@@ -34,8 +34,7 @@ help:
 	@echo "build       - build distribution package"
 	@echo "test        - run automated tests"
 	@echo "testdirty   - run tests without rebuilding environment"
-	@echo "lint        - run quality tools and print to console"
-	@echo "reports     - generate reports from quality tools, for CI"
+	@echo "lint        - run quality tools and print to console and file"
 	@echo ""
 	@echo "clean       - clean test artifacts, reports, and build caches"
 	@echo "distclean   - clean plus build dist packages and venv"
@@ -46,25 +45,27 @@ help:
 	@echo "requirements- generate updated requirements file"
 	@echo ""
 
+reports:
+	mkdir -p  $@
+
 .PHONY: build
 build: |venv
 	venv/bin/python3 -m build
 
 .PHONY: test
-test:
-	tests/runtest.sh
+test: |reports
+	tests/runtest.sh|tee reports/test-report.txt
 
 .PHONY: testdirty
 testdirty:
 	tests/runtest.sh -d
 
 .PHONY: lint
-lint:
-	-venv/bin/ruff check pagecryptor/pagecryptor.py
-
-.PHONY: reports
-reports:
-	@echo "Not implemented"
+lint: |reports
+	rm -rf reports
+	mkdir -p reports
+	-venv/bin/ruff check pagecryptor/pagecryptor.py|tee reports/ruff-report.txt
+	-venv/bin/mypy pagecryptor/pagecryptor.py|tee reports/mypy-report.txt
 
 .PHONY: clean
 clean:
@@ -100,7 +101,8 @@ requirements:
 	python3 -m venv venv
 	venv/bin/python -m pip install -U pip setuptools wheel
 	venv/bin/python -m pip install -Ur requirements.in
-	venv/bin/python -m pip freeze > requirements.txt
+	venv/bin/python -m pip freeze --exclude-editable > requirements.txt
+	@echo "-e ." >> requirements.txt
 
 .PHONY: cleanvenv
 cleanvenv:
