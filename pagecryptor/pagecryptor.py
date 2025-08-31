@@ -22,6 +22,60 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+"""PageCryptor - create self-decrypting web pages.
+
+A command-line tool for encrypting an HTML file into a self-decrypting,
+standalone web page. The generated output is a single HTML file that can be
+opened in a browser. When loaded, it prompts the user for a password and if
+correct, decrypts and displays the original content entirely within the browser.
+No data is ever transmitted off the machine.
+
+## Command Line Usage
+
+```bash
+usage: pagecryptor [-h] [--dump-json JSONFILE] [--password PASSWORD]
+                   [--version]
+                   input_html output_html
+
+Generate encrypted HTML page
+
+positional arguments:
+  input_html            HTML page to encrypt
+  output_html           Encrypted HTML file with client side decrypt
+
+options:
+  -h, --help            Show this help message and exit
+  --dump-json JSONFILE  Write encryption parms to JSON file (for test)
+  --password PASSWORD   Encryption password (insecure, test only)
+  --version             show program's version number and exit
+
+The input HTML file should be a complete HTML file with <head> and <body>. For
+security, do not use --password to specify the password. Instead, let the
+program ask you for the encryption password. The resulting output file is a
+standalone HTML page you can open in a browser. It will ask for the password,
+and if correct, will decrypt and display your original page. All decryption
+occurs in the browser, nothing is sent off your machine.
+```
+
+## Example
+
+```bash
+pagecryptor mypage.html mypage-encrypted.html
+```
+
+This generates `mypage-encrypted.html`, which will prompt for a password when
+opened in a browser. If the password is correct, the page decrypts and renders
+the original content.
+
+## Security Notes
+
+* USE AT YOUR OWN RISK
+* Uses in-browser Web Crypto API.
+* All encryption and authentication use AES-GCM with 256-bit keys.
+* Do **not** pass the password with `--password` in production.
+  Always enter it interactively when prompted.
+"""
+
 import argparse
 import base64
 import json
@@ -36,7 +90,6 @@ from Crypto.Hash import SHA256
 from Crypto.Protocol.KDF import PBKDF2
 from Crypto.Random import get_random_bytes
 from string import Template
-
 
 HTML_TEMPLATE = Template(r"""<!DOCTYPE html>
 <html lang="en">
@@ -83,13 +136,38 @@ $decrypt_js
 </script>
 </body>
 </html>
-""")
+""") # noqa: E501
 
+def encrypt_html(plaintext_html: bytes,
+                 password: bytes,
+                 iterations: int = 200_000) -> dict[str, str | int]:
+    """Encrypt HTML content using AES-GCM with a PBKDF2-derived key.
 
-def encrypt_html(plaintext_html: bytes, password: bytes, iterations: int = 200_000):
+    This function is used to encrypt static HTML content that will be encrypted
+    and then embedded in a client-side self decrypting web page.
+
+    **Parameters**
+
+    - `plaintext_html` (`bytes`): The raw HTML content to encrypt.
+    - `password` (`bytes`): The password used for key derivation.
+    - `iterations` (`int`, optional): The number of PBKDF2 iterations.
+      Defaults to `200_000`.
+
+    **Returns**
+
+    `dict`: A dictionary containing the encryption parameters and data:
+
+    - `iterations` (`int`): The PBKDF2 iteration count used for key derivation.
+    - `salt_b64` (`str`): Base64-encoded random salt (16 bytes).
+    - `iv_b64` (`str`): Base64-encoded AES-GCM IV/nonce (12 bytes).
+    - `ciphertext_b64` (`str`): Base64-encoded encrypted HTML.
+    - `tag_b64` (`str`): Base64-encoded AES-GCM authentication tag.
+    """
     salt = get_random_bytes(16)
     iv = get_random_bytes(12)
-    key = PBKDF2(password=password, salt=salt, dkLen=32, count=iterations, hmac_hash_module=SHA256)
+    key = PBKDF2(password=password, # type: ignore[arg-type]
+                 salt=salt, dkLen=32, count=iterations,
+                 hmac_hash_module=SHA256)
     cipher = AES.new(key, AES.MODE_GCM, nonce=iv)
     ciphertext, tag = cipher.encrypt_and_digest(plaintext_html)
 
@@ -109,15 +187,19 @@ password, and if correct, will decrypt and display your original page. All
 decryption occurs in the browser, nothing is sent off your machine.
 """
 
-def main():
+def cli() -> None: # noqa: D103
     parser = argparse.ArgumentParser(description="Generate encrypted HTML page",
                                      add_help=False, epilog=epilog)
-    parser.add_argument("input_html", help="HTML page to encrypt")
-    parser.add_argument("output_html", help="Encrypted HTML file with client side decrypt")
-    parser.add_argument("-h", "--help", action="help", help="Show this help message and exit")
+    parser.add_argument("input_html",
+                        help="HTML page to encrypt")
+    parser.add_argument("output_html",
+                        help="Encrypted HTML file with client side decrypt")
+    parser.add_argument("-h", "--help", action="help",
+                        help="Show this help message and exit")
     parser.add_argument("--dump-json", metavar="JSONFILE",
                         help="Write encryption parms to JSON file (for test)")
-    parser.add_argument("--password", help="Encryption password (insecure, test only)")
+    parser.add_argument("--password",
+                        help="Encryption password (insecure, test only)")
     version = importlib.metadata.version("pagecryptor")
     parser.add_argument("--version", action="version", version=f"%(prog)s {version}")
     args = parser.parse_args()
@@ -172,4 +254,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    cli()
