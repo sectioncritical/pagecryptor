@@ -77,7 +77,9 @@ pip install git+https://github.com/sectioncritical/pagecryptor.git
 Command line help:
 
 ```
-usage: pagecryptor.py [-h] [--dump-json JSONFILE] [--password PASSWORD] [--version] input_html output_html
+usage: pagecryptor [-h] [-m MESSAGE] [--dump-json JSONFILE]
+                   [--password PASSWORD] [--version]
+                   input_html output_html
 
 Generate encrypted HTML page
 
@@ -87,6 +89,8 @@ positional arguments:
 
 options:
   -h, --help            Show this help message and exit
+  -m MESSAGE, --message MESSAGE
+                        Optional brief message or instruction
   --dump-json JSONFILE  Write encryption parms to JSON file (for test)
   --password PASSWORD   Encryption password (insecure, test only)
   --version             show program's version number and exit
@@ -107,6 +111,9 @@ pagecryptor input.html output.html
 
 This will prompt you for a password and generate `output.html` as a
 self-contained encrypted page.
+
+If you use the optional `--message` option, you can show a brief message that
+will appear under the password box.
 
 ## Development and Testing
 

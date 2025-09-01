@@ -166,4 +166,23 @@ do
     check_exit $? "Decrypted web page does not match"
 done
 
+# check that the original encrypted test1.html does not have anything
+# in the message box
+echo "Checking for default empty message on encrypted page ..."
+grep -E "<div id=\"msg\".*</div>" output/test1.html
+check_exit $? "unexpected value for message field"
+echo "OK"
+
+# now re-encrypt test1 but with a message, and verify it
+echo "Checking for custom message on encrypted page ..."
+pagecryptor "input/test1.html" "output/test1m.html" --message "testmessage" --dump-json "output/test1m.json" --password "foobar"
+check_exit $?  "Error encrypting the web page"
+node test_decrypt.js "${DECRYPT_JS_PATH}" "output/test1m.json" "foobar" "output/test1m.decoded"
+check_exit $? "Error decrypting the web page"
+diff "input/test1.expected" "output/test1m.decoded"
+check_exit $? "Decrypted web page does not match"
+grep -E "<div id=\"msg\".*>testmessage</div>" output/test1m.html
+check_exit $? "unexpected value for message field"
+echo "OK"
+
 echo "Test completed with no errors"

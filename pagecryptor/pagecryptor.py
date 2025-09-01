@@ -33,8 +33,8 @@ No data is ever transmitted off the machine.
 ## Command Line Usage
 
 ```bash
-usage: pagecryptor [-h] [--dump-json JSONFILE] [--password PASSWORD]
-                   [--version]
+usage: pagecryptor [-h] [-m MESSAGE] [--dump-json JSONFILE]
+                   [--password PASSWORD] [--version]
                    input_html output_html
 
 Generate encrypted HTML page
@@ -45,6 +45,8 @@ positional arguments:
 
 options:
   -h, --help            Show this help message and exit
+  -m MESSAGE, --message MESSAGE
+                        Optional brief message or instruction
   --dump-json JSONFILE  Write encryption parms to JSON file (for test)
   --password PASSWORD   Encryption password (insecure, test only)
   --version             show program's version number and exit
@@ -100,7 +102,7 @@ HTML_TEMPLATE = Template(r"""<!DOCTYPE html>
     <h1 style="font-size: 1.2em; font-weight: normal;">Enter password</h1>
     <input id="pw" type="password" style="background: white; padding: 0.5em; border: none; box-shadow: none; display: block; margin: 0.5em auto;">
     <button id="go" style="border: 1px solid #666; background: white; box-shadow: none; padding: 0.4em 1em; margin-top: 0.5em;">Decrypt</button>
-    <div id="msg" style="color:red; margin-top:0.5em;"></div>
+    <div id="msg" style="color:red; margin-top:0.5em;">$initmsg</div>
   </div>
 <script>
 $decrypt_js
@@ -196,6 +198,8 @@ def cli() -> None: # noqa: D103
                         help="Encrypted HTML file with client side decrypt")
     parser.add_argument("-h", "--help", action="help",
                         help="Show this help message and exit")
+    parser.add_argument("-m", "--message", metavar="MESSAGE", type=str, default="",
+                        help="Optional brief message or instruction")
     parser.add_argument("--dump-json", metavar="JSONFILE",
                         help="Write encryption parms to JSON file (for test)")
     parser.add_argument("--password",
@@ -233,15 +237,21 @@ def cli() -> None: # noqa: D103
     stripped = "\n".join(stripped_lines) + "\n"
     plaintext_html_bytes = stripped.encode("utf-8")
 
+    # encrypt the content and return encryption parameters
     params = encrypt_html(plaintext_html_bytes, password)
+
+    # add a user specified message to the page, if any
+    params["initmsg"] = args.message
 
     # Load decrypt.js and strip `export`
     decrypt_js = importlib.resources.read_text("pagecryptor", "decrypt.js")
     decrypt_js = decrypt_js.replace("export ", "")
 
+    # populate the template with the encryption parameters, needed for decrypt
     html_out = HTML_TEMPLATE.substitute(decrypt_js=decrypt_js, **params)
     Path(args.output_html).write_text(html_out, encoding="utf-8")
 
+    # dump encryption info if needed for testing
     if args.dump_json:
         Path(args.dump_json).write_text(
             json.dumps({**params, "password": pw1}, indent=2),
