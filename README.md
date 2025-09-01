@@ -7,6 +7,8 @@ HTML page that prompts for a password and displays the original content upon
 successful decryption. All decryption happens in completely local in the
 browser. The decrypted web page does not leave your computer.
 
+[Live Example](https://sectioncritical.github.io/pagecryptor/grocery-secret.html)
+
 ## License
 
 This project is licensed under the MIT License. See the
@@ -103,7 +105,7 @@ and if correct, will decrypt and display your original page. All decryption
 occurs in the browser, nothing is sent off your machine.
 ```
 
-Example:
+Example Command Line:
 
 ```bash
 pagecryptor input.html output.html
@@ -114,6 +116,20 @@ self-contained encrypted page.
 
 If you use the optional `--message` option, you can show a brief message that
 will appear under the password box.
+
+## Example
+
+There is an example source file located in `./example`. The Makefile task:
+
+    make example
+
+Will generate an encrypted page from this example, also placed in the `example`
+directory. You can take a look at this and open it in a browser to see how it
+works.
+
+Here is a live example:
+
+    https://sectioncritical.github.io/pagecryptor/grocery-secret.html
 
 ## Development and Testing
 
