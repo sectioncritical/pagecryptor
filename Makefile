@@ -35,6 +35,8 @@ help:
 	@echo "test        - run automated tests"
 	@echo "testdirty   - run tests without rebuilding environment"
 	@echo "lint        - run quality tools and print to console and file"
+	@echo "example     - generate the example encrypted page"
+	@echo "gh-pages    - create gh-pages branch with example file"
 	@echo ""
 	@echo "clean       - clean test artifacts, reports, and build caches"
 	@echo "distclean   - clean plus build dist packages and venv"
@@ -66,6 +68,15 @@ lint: |reports
 	mkdir -p reports
 	-venv/bin/ruff check pagecryptor/pagecryptor.py|tee reports/ruff-report.txt
 	-venv/bin/mypy pagecryptor/pagecryptor.py|tee reports/mypy-report.txt
+
+.PHONY: example
+example: |venv
+	venv/bin/pagecryptor "example/grocery.html" "example/grocery-secret.html" --password "pickles" --message "password is 'pickles'"
+	@echo "example encrypted page is in example/grocery-secret.html"
+
+.PHONY: gh-pages
+gh-pages: |venv
+	venv/bin/ghp-import -n -o example
 
 .PHONY: clean
 clean:
