@@ -129,7 +129,11 @@ works.
 
 Here is a live example:
 
-    https://sectioncritical.github.io/pagecryptor/grocery-secret.html
+<https://sectioncritical.github.io/pagecryptor/grocery-secret.html>
+
+## Browser Testing
+
+I did manual testing using Safari and Chromium on MacOS, and Edge on Windows 10.
 
 ## Development and Testing
 
@@ -143,15 +147,15 @@ the usual tools, such as the following probably incomplete list:
 * make
 * bash - test script uses bashisms
 * diff
-* python 3.9 or greater, with pip and venv
+* python 3.10 or greater, with pip and venv
 * node (was tested with 22.18, not sure about older versions)
-* generate example
 
 Some things you can do with the Makefile:
 
 * build python dist package
 * run the tests
 * perform some quality checks (lint)
+* generate example site
 
 You can get some help:
 

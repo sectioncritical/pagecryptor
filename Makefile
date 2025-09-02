@@ -87,6 +87,7 @@ clean:
 	rm -rf tests/output
 	rm -rf tests/venv
 	rm -rf reports
+	rm -f example/grocery-secret.html
 
 .PHONY: distclean
 distclean: clean cleanvenv
