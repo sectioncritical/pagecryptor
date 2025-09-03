@@ -54,13 +54,15 @@ Re-enter encryption password:
 Encrypted page written to grocery-secret.html
 ```
 
-![](img/encrypted-secret-page.jpg)
-
 The result will be a new web page that simply shows a password box. All of your
 original page is stored in this new page in encrypted form. The encrypted page
 contains a javascript function that will decrypt it after you enter your
-password. If the decryption is successful, it completely replaces the
-"password" page with your original page that has now been decrypted.
+password.
+
+![](img/encrypted-secret-page.jpg)
+
+If the decryption is successful, it completely replaces the "password" page
+with your original page that has now been decrypted.
 
 ![](img/decrypted-secret-page.jpg)
 
