@@ -95,14 +95,62 @@ from string import Template
 
 HTML_TEMPLATE = Template(r"""<!DOCTYPE html>
 <html lang="en">
-<meta charset="utf-8">
-<title>Encrypted Page</title>
-<body style="font-family: sans-serif; background: #ddd; text-align: center; padding-top: 3em;">
+<head>
+  <meta charset="utf-8">
+  <title>Encrypted Page</title>
+  <style>
+    body {
+	  font-family: sans-serif;
+      background: #ddd;
+      text-align: center;
+      padding-top: 3em;
+    }
+    #gate {
+      max-width: 20em;
+      margin: auto;
+    }
+    #gate h1 {
+      font-size: 1.2em;
+      font-weight: normal;
+    }
+    #pw {
+      width: 100%;
+      max-width: 100%;
+      background: white;
+      padding: 0.8em;
+      font-size: 1em;
+      border: 1px solid #aaa;
+      border-radius: 0.3em;
+      box-sizing: border-box;
+      margin: 0.5em 0;
+    }
+    #go {
+      padding: 0.8em;
+      font-size: 1em;
+      border: 1px solid #666;
+      background: #f8f8f8;
+      border-radius: 0.3em;
+      margin-top: 0.5em;
+      cursor: pointer;
+    }
+    #go:hover {
+      background: #eee;
+    }
+    #go:active {
+      background: #ddd;
+    }
+    #msg {
+      color: red;
+      margin-top: 0.5em;
+    }
+   </style>
+</head>
+<body>
   <div id="gate">
-    <h1 style="font-size: 1.2em; font-weight: normal;">Enter password</h1>
-    <input id="pw" type="password" style="background: white; padding: 0.5em; border: none; box-shadow: none; display: block; margin: 0.5em auto;">
-    <button id="go" style="border: 1px solid #666; background: white; box-shadow: none; padding: 0.4em 1em; margin-top: 0.5em;">Decrypt</button>
-    <div id="msg" style="color:red; margin-top:0.5em;">$initmsg</div>
+    <h1>Enter password</h1>
+    <input id="pw" type="password">
+    <button id="go">Decrypt</button>
+    <div id="msg">$initmsg</div>
   </div>
 <script>
 $decrypt_js
@@ -133,7 +181,16 @@ $decrypt_js
     }
   }
 
-  document.getElementById("go").addEventListener("click", onGo);
+  const pwBox = document.getElementById("pw");
+  const goBtn = document.getElementById("go");
+
+  goBtn.addEventListener("click", onGo);
+  pwBox.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      onGo();
+    }
+  });
 })();
 </script>
 </body>

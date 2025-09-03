@@ -133,7 +133,14 @@ Here is a live example:
 
 ## Browser Testing
 
-I did manual testing using Safari and Chromium on MacOS, and Edge on Windows 10.
+I did manual testing with the following:
+
+| OS                | Browser                           |
+|-------------------|-----------------------------------|
+| MacOS 15.5        | Safari 18.5                       |
+| MacOS 15.5        | Chromium 133.0.6943.53 (ungoogled)|
+| Windows 10 22H2   | Edge 139.0.3405.125               |
+| iOS 18.6          | Mobile Safari                     |
 
 ## Development and Testing
 
