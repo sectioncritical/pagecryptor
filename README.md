@@ -47,6 +47,13 @@ encrypt it. When you run the tool, it will ask you for a password. This is the
 same password you will use to decrypt the page, and it should be a "strong"
 password.
 
+```bash
+$ pagecryptor grocery.html grocery-secret.html
+Enter encryption password:
+Re-enter encryption password:
+Encrypted page written to grocery-secret.html
+```
+
 ![](img/encrypted-secret-page.jpg)
 
 The result will be a new web page that simply shows a password box. All of your
