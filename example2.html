@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Encrypted Page</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #ddd;
+      text-align: center;
+      padding-top: 3em;
+    }
+
+    #gate {
+      max-width: 20em;
+      margin: auto;
+    }
+
+    #gate h1 {
+      font-size: 1.2em;
+      font-weight: normal;
+    }
+
+    #pw {
+      width: 100%;
+      max-width: 100%;
+      background: white;
+      padding: 0.8em;
+      font-size: 1em;
+      border: 1px solid #aaa;
+      border-radius: 0.3em;
+      box-sizing: border-box;
+      margin: 0.5em 0;
+    }
+
+    #go {
+      width: 100%;
+      padding: 0.8em;
+      font-size: 1em;
+      border: 1px solid #666;
+      background: white;
+      border-radius: 0.3em;
+      margin-top: 0.5em;
+    }
+
+    #msg {
+      color: red;
+      margin-top: 0.5em;
+    }
+  </style>
+</head>
+<body>
+  <div id="gate">
+    <h1>Enter password</h1>
+    <input id="pw" type="password">
+    <button id="go">Decrypt</button>
+    <div id="msg">password is 'pickles'</div>
+  </div>
+<script>
+// decrypt.js
+// This function only:
+// Copyright 2025 Joseph Kroesche
+// Subject to MIT license: https://choosealicense.com/licenses/mit/
+//
+async function decryptHtml(password, ciphertextB64, tagB64, ivB64, saltB64, iterations) {
+  const enc = new TextEncoder();
+  const dec = new TextDecoder();
+
+  function b64ToBytes(b64) {
+    const bin = atob(b64);
+    const out = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+
+  function concatBytes(a, b) {
+    const out = new Uint8Array(a.length + b.length);
+    out.set(a, 0);
+    out.set(b, a.length);
+    return out;
+  }
+
+  async function deriveAesGcmKey(passwordBytes, saltBytes, iterations) {
+    const baseKey = await crypto.subtle.importKey(
+      "raw",
+      passwordBytes,
+      "PBKDF2",
+      false,
+      ["deriveKey"]
+    );
+    return crypto.subtle.deriveKey(
+      {
+        name: "PBKDF2",
+        salt: saltBytes,
+        iterations: iterations,
+        hash: "SHA-256"
+      },
+      baseKey,
+      { name: "AES-GCM", length: 256 },
+      false,
+      ["decrypt"]
+    );
+  }
+
+  const salt = b64ToBytes(saltB64);
+  const iv = b64ToBytes(ivB64);
+  const ct = b64ToBytes(ciphertextB64);
+  const tag = b64ToBytes(tagB64);
+  const ctPlusTag = concatBytes(ct, tag);
+
+  const key = await deriveAesGcmKey(enc.encode(password), salt, iterations);
+
+  const plainBuf = await crypto.subtle.decrypt(
+    { name: "AES-GCM", iv: iv, tagLength: 128 },
+    key,
+    ctPlusTag.buffer
+  );
+
+  return dec.decode(new Uint8Array(plainBuf));
+}
+
+
+(async () => {
+  const params = {
+    iterations: 200000,
+    salt_b64: "ziBB9kRihWJSDtzbk6IUAA==",
+    iv_b64: "faEXuDyNaic02z45",
+    ciphertext_b64: "8ckEZQkmCWbn7VY6ck4R2D+qzuobThjBaPpOSSrcOyo6ZLIiD+9cuomLhsBdv9ixwmO58VO2o7p3eFlldwYlYdfdaA+niYgvq8L80C5Iib6WDHutrjKCdkGsPr5eWq4i/+Q6hYirRPAIa+w3FQOaqRLp7IB3pTFHMFZa2qCnSfpb3QK1mZpe/ZOIKZYYb3/sd230Jjp4LgaNEsXS8ZpSzbc1seOT0Op5DQoK9BRfR1a5mwpSA/0U7E8JxFGIXw+atMzYb2icpEMbDK+x0bj8UsaG3OTz9wl8fv3vYlF/RcDXfihSALEkrb+heYrCShmtBHJhMgTyu/xlQZHh+TqaQaDuRymmLpT2JqSiHGHcfYKVz7cNMafMKyCm7HQLRsMFnCQjKYmdyBeHxRRlFW49mvViFTUHtiSINjLzYGALubsZDAUjV/fYbXURk4wLw8Jgj35vYNkXQFMOERFN205ZJo2WkqCWV9118J3uNFescFtrJAB/hWfdhcCurcKz7cjbT4sAYsjbfH2MX7vcNkH1fVYkLGvIEL+piR7Bez2AW/SW2abd403qQZA43vgug6+BgurrU7CK51EJk6yTiqFDnSGNpTnEld8fYgECaLwtf2S7jO+3OW/yLTGdyXCmHrNOykyOTwnJOu4ONGVDEMmWhXHeUNBN+v0AnH4C4jiW+ticXtZnwOVRbCRJ9YdisxvmX3saf9z401atlxCu7Eau5Eo5bLFxTZPtK/rR23Px5z1DEyPXFqXvfjblNcp4r06OSuRxwSaLKfU1UAJaXwKv90kcz0PTj/7U8mKmbqWtung8rZ77WIPMw0Hi1+eEl1+Fs6AhUyGRr+JH49zFIJtDQ6B8jxHU4GqXynWsn8MF71tJBXEoMXGKi1B1N6oCYD1DZDlaHIFt/4/nyPP5MEkPrbhQcmIb5bVCJ/mJQhC4H2Qqv4ThcsE7JThEdweBDFtiPLpnlDfR4COgwas72CVOLGCsYgYAFYiGRNlkqPIQ/aE4VuSGkLF/y+ycGHSFuXmwwGQg6Da31sVplFdIvp2Pfn9Ql8ztSld+tktKQtAgl97V661/bm94BdDzqzxrzTO7NcAuWILR5Qr/0SqEN5ckc4tn99dexgZDV2kngwn1+1v1o15DEX+MpL31/hZJ3xoRMjsxGxl0OkZ54XTdSSSe9TFAOKuH7st+Arok/ZwqdcxAQVmQf5rNSb0TQeEU9eRfr6AkYX4FA+JOHBhYtv7lL2/hl9dngXjuMZp7LWNEsQ2u6WzyFhyvCTYJKxAZ0LfHYw83Q7WIabYuOLGcLX+y88J/Ys9O7/76Ji4/2JWC6WTLbuJlQV0aEG8q87WL7cc9ydhhQ8xWcvDGotXj8dmhYvkB7MAsRwlIkow2AshscEYw//Z5lWGGup9sL+Irb9+ukTQZyS41I7eFwoB1TC5VjkYZKSofxvFkTnJCVRZwE261wNCUTQjWycsb1Ceb1jA4bnI6MePkugGU3MRoieX+jTYQv8xd7nIWYrRDUDoC6t+Rg6YjrKoTFVdNcFRY192E3zG+Uk/14NDkMppwtiTwBwhmokV2beBMc7TNnpyBQap1NtbqVi3rUD4fZHkVBiZTI2e+7ZDiYyMU9HbC4C8UdB2jdPSt7t3Oqg+TrF4K3T+qaFLBmy41BsxNl8WnvdelyUuuPt1NBoQ=",
+    tag_b64: "fMK1fvPK7h+OmTf4R9YBKA=="
+  };
+
+  async function onGo() {
+    const pw = document.getElementById("pw").value;
+    try {
+      const html = await decryptHtml(
+        pw,
+        params.ciphertext_b64,
+        params.tag_b64,
+        params.iv_b64,
+        params.salt_b64,
+        params.iterations
+      );
+      document.documentElement.innerHTML = html;
+    } catch (e) {
+      document.getElementById("msg").textContent = "Decryption failed.";
+    }
+  }
+
+  const pwBox = document.getElementById("pw");
+  const goBtn = document.getElementById("go");
+
+  goBtn.addEventListener("click", onGo);
+  pwBox.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      onGo();
+    }
+  });
+})();
+</script>
+</body>
+</html>
+
