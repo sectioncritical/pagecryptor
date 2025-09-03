@@ -195,7 +195,7 @@ $decrypt_js
 </script>
 </body>
 </html>
-""") # noqa: E501
+""") # noqa: E101
 
 def encrypt_html(plaintext_html: bytes,
                  password: bytes,

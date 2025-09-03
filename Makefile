@@ -22,6 +22,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# uses some bashism so we need to enforce bash for the github CI runner
+SHELL:=$(shell command -v bash)
+
 all: build
 
 .PHONY: help
@@ -56,7 +59,10 @@ build: |venv
 
 .PHONY: test
 test: |reports
-	tests/runtest.sh|tee reports/test-report.txt
+	@( \
+	tests/runtest.sh|tee reports/test-report.txt; test_status=$${PIPESTATUS[0]}; \
+	exit $$((test_status != 0)); \
+	)
 
 .PHONY: testdirty
 testdirty:
@@ -64,10 +70,18 @@ testdirty:
 
 .PHONY: lint
 lint: |reports
-	rm -rf reports
-	mkdir -p reports
-	-venv/bin/ruff check pagecryptor/pagecryptor.py|tee reports/ruff-report.txt
-	-venv/bin/mypy pagecryptor/pagecryptor.py|tee reports/mypy-report.txt
+	@rm -rf reports
+	@mkdir -p reports
+	@( \
+	echo "RUFF ========"; \
+	venv/bin/ruff check pagecryptor/pagecryptor.py | tee reports/ruff-report.txt; ruff_status=$${PIPESTATUS[0]}; \
+	echo "RUFF ^^^^^^^^"; \
+	echo ""; \
+	echo "MYPY ========"; \
+	venv/bin/mypy pagecryptor/pagecryptor.py | tee reports/mypy-report.txt; mypy_status=$${PIPESTATUS[0]}; \
+	echo "MYPY ^^^^^^^^"; \
+	exit $$((ruff_status != 0 || mypy_status != 0)); \
+	)
 
 .PHONY: example
 example: |venv

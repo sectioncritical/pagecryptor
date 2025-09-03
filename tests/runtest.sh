@@ -150,6 +150,8 @@ testlist=(  "test1" "foobar"        \
             "test4" "üñîçødë-Teßt"  \
             "test5" "ThisIsALongerPassword_ForTestingPurposesOnly123!")
 
+failed=0
+
 for ((i=0; i<${#testlist[@]}; i+=2))
 do
     testfile="${testlist[i]}"
@@ -157,32 +159,61 @@ do
     echo "Testing [$testfile] using password [$testpass]"
     echo "encrypting ..."
     pagecryptor "input/${testfile}.html" "output/${testfile}.html" --dump-json "output/${testfile}.json" --password "${testpass}"
-    check_exit $? "Error encrypting the web page"
+    if [ $? -ne 0 ]; then
+        echo "***ERROR: encrypting ${testfile}"
+        failed=1
+    fi
     echo "decrypting ..."
     node test_decrypt.js "${DECRYPT_JS_PATH}" "output/${testfile}.json" "${testpass}" "output/${testfile}.decoded"
-    check_exit $? "Error decrypting the web page"
+    if [ $? -ne 0 ]; then
+        echo "***ERROR: decrypting ${testfile}"
+        failed=1
+    fi
     echo "diffing ..."
     diff "input/${testfile}.expected" "output/${testfile}.decoded"
-    check_exit $? "Decrypted web page does not match"
+    if [ $? -ne 0 ]; then
+        echo "***ERROR: decrypted ${testfile} does not match"
+        failed=1
+    fi
 done
 
 # check that the original encrypted test1.html does not have anything
 # in the message box
 echo "Checking for default empty message on encrypted page ..."
 grep -E "<div id=\"msg\".*</div>" output/test1.html
-check_exit $? "unexpected value for message field"
+if [ $? -ne 0 ]; then
+    echo "***ERROR: unexpected pattern in msg block in encrypted test1"
+    failed=1
+fi
 echo "OK"
 
 # now re-encrypt test1 but with a message, and verify it
 echo "Checking for custom message on encrypted page ..."
 pagecryptor "input/test1.html" "output/test1m.html" --message "testmessage" --dump-json "output/test1m.json" --password "foobar"
-check_exit $?  "Error encrypting the web page"
+if [ $? -ne 0 ]; then
+    echo "***ERROR: encrypting test1m"
+    failed=1
+fi
 node test_decrypt.js "${DECRYPT_JS_PATH}" "output/test1m.json" "foobar" "output/test1m.decoded"
-check_exit $? "Error decrypting the web page"
+if [ $? -ne 0 ]; then
+    echo "***ERROR: decrypting test1m"
+    failed=1
+fi
 diff "input/test1.expected" "output/test1m.decoded"
-check_exit $? "Decrypted web page does not match"
+    if [ $? -ne 0 ]; then
+        echo "***ERROR: decrypted test1m does not match"
+        failed=1
+    fi
 grep -E "<div id=\"msg\".*>testmessage</div>" output/test1m.html
-check_exit $? "unexpected value for message field"
+if [ $? -ne 0 ]; then
+    echo "***ERROR: unexpected pattern in msg block in encrypted test1m"
+    failed=1
+fi
 echo "OK"
 
-echo "Test completed with no errors"
+if [ ${failed} -ne 0 ]; then
+    echo "Errors occured in the test."
+    exit 1
+else
+    echo "Test completed with no errors"
+fi

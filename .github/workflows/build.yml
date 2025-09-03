@@ -1,0 +1,45 @@
+name: build
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/**'
+      - 'release/**'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: clean
+        run: make distclean
+      - name: venv
+        run: make venv
+      - name: audit
+        run: make audit
+      - name: lint
+        if: '!cancelled()'
+        run: make lint
+      - name: test
+        if: '!cancelled()'
+        run: make test
+      - name: build
+        if: '!cancelled()'
+        run: make build
+      - name: reports
+        if: '!cancelled()'
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          path: reports/*
+      - name: packages
+        if: '!cancelled()'
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/*
