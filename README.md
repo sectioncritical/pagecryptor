@@ -40,16 +40,31 @@ a complete static and valid HTML page that you can view locally in your own
 browser prior to encryption. The web page can have styling, but do not bother
 to put any script in there, it will not run.
 
+![](img/original-secret-page.jpg)
+
 Once you have your web page ready to go, you use the `pagecryptor` tool to
 encrypt it. When you run the tool, it will ask you for a password. This is the
 same password you will use to decrypt the page, and it should be a "strong"
 password.
 
+```bash
+$ pagecryptor grocery.html grocery-secret.html
+Enter encryption password: ********
+Re-enter encryption password: ********
+Encrypted page written to grocery-secret.html
+```
+
 The result will be a new web page that simply shows a password box. All of your
 original page is stored in this new page in encrypted form. The encrypted page
 contains a javascript function that will decrypt it after you enter your
-password. If the decryption is successful, it completely replaces the
-"password" page with your original page that has now been decrypted.
+password.
+
+![](img/encrypted-secret-page.jpg)
+
+If the decryption is successful, it completely replaces the "password" page
+with your original page that has now been decrypted.
+
+![](img/decrypted-secret-page.jpg)
 
 When you entered your password, it was only used by the script function running
 in your browser. It is not transmitted to any server. If you close the browser
