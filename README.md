@@ -49,8 +49,8 @@ password.
 
 ```bash
 $ pagecryptor grocery.html grocery-secret.html
-Enter encryption password:
-Re-enter encryption password:
+Enter encryption password: ********
+Re-enter encryption password: ********
 Encrypted page written to grocery-secret.html
 ```
 
