@@ -266,7 +266,7 @@ def cli() -> None: # noqa: D103
     args = parser.parse_args()
 
     if args.password:
-        pw1 = args.password
+        pw1: str = args.password
         password = pw1.encode()
     else:
         pw1 = getpass.getpass("Enter encryption password: ")

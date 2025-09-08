@@ -5,4 +5,5 @@ mypy
 pylint
 junit2html
 ghp-import
+lxml
 -e .

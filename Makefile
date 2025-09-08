@@ -35,9 +35,11 @@ help:
 	@echo "-------------"
 	@echo ""
 	@echo "build       - build distribution package"
-	@echo "test        - run automated tests"
-	@echo "testdirty   - run tests without rebuilding environment"
-	@echo "lint        - run quality tools and print to console and file"
+	@echo "test        - run automated tests, with reports"
+	@echo "testpretty  - run automated test, output only to console"
+	@echo "testdirty   - run tests without rebuilding environment (for debug)"
+	@echo "ruff        - run ruff code quality and style scanner, with reports"
+	@echo "mypy        - run mypy type annotation checker, with reports"
 	@echo "example     - generate the example encrypted page"
 	@echo "gh-pages    - create gh-pages branch with example file"
 	@echo ""
@@ -48,40 +50,79 @@ help:
 	@echo "cleanvenv   - clean the python venv"
 	@echo "audit       - run python package checker (automatic when needed)"
 	@echo "requirements- generate updated requirements file"
+	@echo "submodules  - check out the BATS submodules (only for test)"
 	@echo ""
-
-reports:
-	mkdir -p  $@
 
 .PHONY: build
 build: |venv
 	venv/bin/python3 -m build
 
+# create the reports subdir
+reports:
+	@mkdir -p  $@
+
+# runs the test script
+# prints report to console
+# generates junit file
+# generates html report from junit
 .PHONY: test
-test: |reports
-	@( \
-	tests/runtest.sh|tee reports/test-report.txt; test_status=$${PIPESTATUS[0]}; \
-	exit $$((test_status != 0)); \
-	)
-
-.PHONY: testdirty
-testdirty:
-	tests/runtest.sh -d
-
-.PHONY: lint
-lint: |reports
-	@rm -rf reports
-	@mkdir -p reports
-	@( \
-	echo "RUFF ========"; \
-	venv/bin/ruff check pagecryptor/pagecryptor.py | tee reports/ruff-report.txt; ruff_status=$${PIPESTATUS[0]}; \
-	echo "RUFF ^^^^^^^^"; \
+test: submodules |reports
+	@echo ""
+	@echo "****RUNNING TESTS****"
+	@echo ""
+	@./tests/bats-core/bin/bats --report-formatter "junit" --output ./reports ./tests/pctest.bats; \
+	exit_status=$$?; \
 	echo ""; \
-	echo "MYPY ========"; \
-	venv/bin/mypy pagecryptor/pagecryptor.py | tee reports/mypy-report.txt; mypy_status=$${PIPESTATUS[0]}; \
-	echo "MYPY ^^^^^^^^"; \
-	exit $$((ruff_status != 0 || mypy_status != 0)); \
-	)
+	echo "Generating test report"; \
+	echo ""; \
+	mv ./reports/report.xml ./reports/test-report.xml; \
+	venv/bin/junit2html ./reports/test-report.xml ./reports/test-report.html; \
+	exit $$exit_status
+
+# run the test and just show results to console, no test report file
+.PHONY: testpretty
+testpretty: submodules
+	./tests/bats-core/bin/bats --formatter "pretty" ./tests/pctest.bats
+
+# run the test and reuse the existing venv instead of making a new one
+# this is useful when debugging the test as it runs faster and avoids pulling
+# modules from who-knows-where every single time you run the test
+.PHONY: testdirty
+testdirty: submodules
+	TEST_DIRTY_VENV=1 ./tests/bats-core/bin/bats --formatter "pretty" ./tests/pctest.bats
+
+# run mypy scan and generate junit report
+# also prints errors to console
+# this also creates a "type coverage" html report
+# also convert junit report to html for human browsing
+.PHONY: mypy
+mypy: venv |reports
+	@echo ""
+	@echo "****RUNNING MYPY****"
+	@echo ""
+	@venv/bin/mypy pagecryptor/pagecryptor.py --html-report ./reports/mypy-type-report --no-error-summary --junit-xml ./reports/mypy-report.xml; \
+	exit_status=$$?; \
+	echo ""; \
+	echo "Generating mypy report"; \
+	echo ""; \
+	venv/bin/junit2html ./reports/mypy-report.xml ./reports/mypy-report.html; \
+	exit $$exit_status
+
+# run ruff scanner
+# generates junit report and html file
+.PHONY: ruff
+ruff: venv |reports
+	@echo ""
+	@echo "****RUNNING RUFF****"
+	@echo ""
+	@-venv/bin/ruff check pagecryptor/pagecryptor.py
+	@echo ""
+	@echo "Generating ruff report"
+	@echo ""
+	@venv/bin/ruff check pagecryptor/pagecryptor.py --output-format "junit" >./reports/ruff-report.xml; \
+	exit_status=$$?; \
+	venv/bin/junit2html ./reports/ruff-report.xml ./reports/ruff-report.html; \
+	exit $$exit_status
 
 .PHONY: example
 example: |venv
@@ -106,6 +147,12 @@ clean:
 .PHONY: distclean
 distclean: clean cleanvenv
 	rm -rf dist
+
+./tests/bats-core/bin/bats:
+	git submodule update --init --recursive
+
+.PHONY: submodules
+submodules: ./tests/bats-core/bin/bats
 
 ########################################
 # PYTHON VIRTUAL ENVIRONMENT MAINTENANCE

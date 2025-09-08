@@ -16,15 +16,20 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v4
+        with:
+          submodules: true
       - name: clean
         run: make distclean
       - name: venv
         run: make venv
       - name: audit
         run: make audit
-      - name: lint
+      - name: ruff
         if: '!cancelled()'
-        run: make lint
+        run: make ruff
+      - name: mypy
+        if: '!cancelled()'
+        run: make mypy
       - name: test
         if: '!cancelled()'
         run: make test
